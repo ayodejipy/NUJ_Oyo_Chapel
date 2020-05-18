@@ -30,23 +30,23 @@
                                 <ul class="navbar-nav align-items-center">
 
                                     <li class="nav-item active">
-                                        @Html.ActionLink("Home", "index", null, new { @class = "nav-link" })
+                                        <a class="nav-link" href="~/">Home</a>
                                     </li>
 
                                     <li class="nav-item">
-                                        @Html.ActionLink("About", "about", null, new { @class = "nav-link" })
+                                        <a class="nav-link" href="~/home/about">About</a>
                                     </li>
 
                                     <li class="nav-item">
-                                        @Html.ActionLink("Executives", "members", null, new { @class = "nav-link" })
+                                        <a class="nav-link" href="~/home/members">Executives</a>
                                     </li>
 
                                     <li class="nav-item">
-                                        @Html.ActionLink("Blog", "blog", null, new { @class = "nav-link" })
+                                        <a class="nav-link" href="~/home/Blog">Blog</a>
                                     </li>
 
                                     <li class="nav-item">
-                                        @Html.ActionLink("Contact", "contact", null, new { @class = "nav-link" })
+                                        <a class="nav-link" href="~/home/contact">Contact</a>
                                     </li>
 
                                     @Html.Partial("_LoginPartial")

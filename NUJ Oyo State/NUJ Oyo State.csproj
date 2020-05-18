@@ -97,6 +97,8 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
     <Reference Include="System.Web.ApplicationServices" />
@@ -180,11 +182,16 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\AccountViewModels.cs" />
+    <Compile Include="Models\Data\CategoriesDTO.cs" />
+    <Compile Include="Models\Data\GalleryDTO.cs" />
+    <Compile Include="Models\Data\ImagesDTO.cs" />
     <Compile Include="Models\Data\MembershipRequestDTO.cs" />
-    <Compile Include="Models\Helpers\Email.cs" />
+    <Compile Include="Helpers\Email.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\ManageViewModels.cs" />
     <Compile Include="Models\ViewModels\Helpers\EmailMessageVM.cs" />
+    <Compile Include="Models\ViewModels\HomeViewModel.cs" />
+    <Compile Include="Models\ViewModels\ImagesVIewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
   </ItemGroup>
@@ -243,6 +250,7 @@
     <Content Include="img\excos\chairman.jpg" />
     <Content Include="img\excos\nuj-2.png" />
     <Content Include="img\excos\secretary.png" />
+    <Content Include="img\excos\user.jpg" />
     <Content Include="img\favicon.png" />
     <Content Include="img\gallery\01.jpg" />
     <Content Include="img\gallery\02.jpg" />
@@ -374,6 +382,7 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

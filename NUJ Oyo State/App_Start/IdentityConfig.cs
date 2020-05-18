@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data.Entity;
-using System.Linq;
 using System.Net;
 using System.Net.Mail;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using Microsoft.AspNet.Identity;
-using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin;
 using Microsoft.Owin.Security;
@@ -20,29 +15,44 @@ namespace NUJ_Oyo_State
 {
     public class EmailService : IIdentityMessageService
     {
-        public Task SendAsync(IdentityMessage message)
+        public async Task SendAsync(IdentityMessage message)
         {
             // Plug in your email service here to send an email.
-            string senderEmail = System.Configuration.ConfigurationManager.AppSettings["smtpUserEmail"].ToString();
-            string senderPassword = System.Configuration.ConfigurationManager.AppSettings["smtpPassword"].ToString();
-
-            SmtpClient client = new SmtpClient("smtp.gmail.com", 587);
-            client.EnableSsl = true;
-            client.DeliveryMethod = SmtpDeliveryMethod.Network;
-            client.UseDefaultCredentials = false;
-            client.Credentials = new NetworkCredential(senderEmail, senderPassword);
-
-            MailMessage mailMessage = new MailMessage(senderEmail, message.Destination);
-            mailMessage.IsBodyHtml = true;
-            mailMessage.BodyEncoding = UTF8Encoding.UTF8;
-
-            mailMessage.Subject = message.Subject;
-            mailMessage.Body = message.Body;
-            client.Send(mailMessage);
-
-
-            return Task.FromResult(0);
+            await configSendEmailAsync(message);
         }
+
+        private async Task configSendEmailAsync(IdentityMessage message)
+        {
+            try
+            {
+                string senderEmail = System.Configuration.ConfigurationManager.AppSettings["smtpUserEmail"].ToString();
+                string senderPassword = System.Configuration.ConfigurationManager.AppSettings["smtpPassword"].ToString();
+
+                SmtpClient client = new SmtpClient("smtp.gmail.com", 587);
+                client.EnableSsl = true;
+                client.Timeout = 100000;
+                client.DeliveryMethod = SmtpDeliveryMethod.Network;
+                client.UseDefaultCredentials = true;
+                client.Credentials = new NetworkCredential(senderEmail, senderPassword);
+
+                MailMessage mailMessage = new MailMessage(senderEmail, message.Destination);
+                mailMessage.IsBodyHtml = true;
+                mailMessage.BodyEncoding = UTF8Encoding.UTF8;
+
+                mailMessage.Subject = message.Subject;
+                mailMessage.Body = message.Body;
+
+                client.Send(mailMessage);
+
+            }
+            catch (Exception ex)
+            {
+                
+            }
+
+            //return Task.FromResult(0);
+        }
+
     }
 
     public class SmsService : IIdentityMessageService
@@ -62,12 +72,12 @@ namespace NUJ_Oyo_State
         {
         }
 
-        public static UserManager Create(IdentityFactoryOptions<UserManager> options, IOwinContext context) 
+        public static UserManager Create(IdentityFactoryOptions<UserManager> options, IOwinContext context)
         {
             var manager = new UserManager(new CustomUserStore(context.Get<ApplicationDbContext>()));
             // Configure validation logic for usernames
             manager.UserValidator = new UserValidator<User, int>(manager)
-            {
+            { 
                 AllowOnlyAlphanumericUserNames = false,
                 RequireUniqueEmail = true
             };
@@ -103,7 +113,7 @@ namespace NUJ_Oyo_State
             var dataProtectionProvider = options.DataProtectionProvider;
             if (dataProtectionProvider != null)
             {
-                manager.UserTokenProvider = 
+                manager.UserTokenProvider =
                     new DataProtectorTokenProvider<User, int>(dataProtectionProvider.Create("ASP.NET Identity"));
             }
             return manager;

@@ -191,46 +191,24 @@
 
                             @Html.HiddenFor(model => model.ImageString)
 
-                            <!-- Button trigger modal -->
-                            <button type="button" class="btn btn-upload" data-toggle="modal" data-target="#exampleModal">
-                                Choose Profile Image <i class="fa fa-check"></i>
-                            </button>
-                            <!-- Modal -->
-                            <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                                <div class="modal-dialog" role="document">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="exampleModalLabel">Add a Profile Picture</h5>
-                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <div class="modal-body" style="height: 500px; padding: 0.5rem; width: auto;">
+                            <div class="upload-demo">
+                                <input type="file" id="upload" value="Choose a file" accept="image/*" data-role="none" />
+                                <div class="col-1-2" style="margin: 0 auto;display:table;">
+                                    <div class="upload-msg">
+                                        Click to upload a profile image
+                                    </div>
 
-                                            <div class="upload-demo">
-                                                <input type="file" id="upload" value="Choose a file" accept="image/*" data-role="none" />
+                                    <div id="upload-demo"></div>
 
-                                                <div class="col-1-2" style="margin: 0 auto;display:table;">
-                                                    <div class="upload-msg">
-                                                        Click to upload a profile image
-                                                    </div>
-
-                                                    <div id="upload-demo"></div>
-
-                                                    <div class="buttons" style="margin:0 auto;display:table;">
-                                                        <button id="btn" class="upload-result">Use This Image</button>
-                                                        <button id="btn" class="reset" style="margin-left:5px;">Remove Image</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div class="buttons" style="margin:0 auto;display:table;">
+                                        <button id="btn" class="upload-result">Use This Image <i class="fa fa-check"></i></button>
+                                        <button id="btn" class="reset" style="margin-left:5px;">Remove Image</button>
                                     </div>
                                 </div>
                             </div>
-
                         </fieldset>
 
-                        <button type="button" class="btn my-3 btn-block btn-reg" onclick="submitForm()">Register</button>
+                        <button type="submit" class="btn my-3 btn-block btn-reg" id="submitButton">Register</button>
                     </form>
                 </div>
             </div>
@@ -248,7 +226,6 @@
             // activates the gender select list
             (function () {
                 $('.nice-select').remove();
-                //$('.nice-select .form-control').parentNode.removeChild(element)
             })()
 
             var $uploadCrop
@@ -292,8 +269,7 @@
             $('#upload').on('change', function () { readFile(this) })
 
             $('.upload-result').on('click', function () {
-                $('#exampleModal').modal('hide')
-
+                event.preventDefault()
                 $uploadCrop.croppie('result', {
                     type: 'base64',
                     size: 'jpeg'
@@ -322,9 +298,5 @@
                 $uploadCrop = null;
             })
         })
-
-        function submitForm() {
-            $('.form').submit();
-        }
     </script>
 }
