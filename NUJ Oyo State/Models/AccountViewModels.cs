@@ -135,6 +135,10 @@ namespace NUJ_Oyo_State.Models
             Designation = row.Designation;
             ImageString = row.ImageString;
             Date = row.Date;
+            UserApproved = row.UserApproved;
+            DefaultPassword = row.DefaultPassword;
+            Active = row.Active;
+            Comment = row.Comment;
         }
 
         public int Id { get; set; }
@@ -189,5 +193,14 @@ namespace NUJ_Oyo_State.Models
         public string ImageString { get; set; }
 
         public DateTime Date { get; set; }
+
+        public bool? UserApproved { get; set; }
+
+        public string DefaultPassword { get; set; }
+
+        public bool Active { get; set; }
+
+        public string Comment { get; set; }
     }
+
 }

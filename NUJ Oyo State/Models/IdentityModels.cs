@@ -20,11 +20,9 @@ namespace NUJ_Oyo_State.Models
         public string City { get; set; }
         public string State { get; set; }
         public string Zip { get; set; }
-        public string  MembershipId { get; set; }
+        public string MembershipId { get; set; }
         public string Branch { get; set; }
         public string Designation { get; set; }
-        public string ImageString { get; set; }
-
 
         public async Task<ClaimsIdentity> GenerateUserIdentityAsync(UserManager<User, int> manager)
         {
@@ -43,9 +41,6 @@ namespace NUJ_Oyo_State.Models
             //disable initializer
             Database.SetInitializer<ApplicationDbContext>(null);
         }
-
-        // other database objects
-        public DbSet<MembershipRequestDTO> MembershipRequest { get; set; }
 
 
         public static ApplicationDbContext Create()
@@ -90,7 +85,11 @@ namespace NUJ_Oyo_State.Models
             modelBuilder.Entity<CustomRole>().ToTable("tblRoles").Property(p => p.Id).HasColumnName("RoleId");
         }
 
-        public System.Data.Entity.DbSet<NUJ_Oyo_State.Models.MembershipRequestVM> MembershipRequestVMs { get; set; }
+        // Other Database Sets
+        public DbSet<MembershipRequestDTO> MembershipRequest { get; set; }
+        public DbSet<ImagesDTO> Images { get; set; }
+        public DbSet<GalleryDTO> Gallery { get; set; }
+        public DbSet<CategoriesDTO> Categories { get; set; }
     }
 
    

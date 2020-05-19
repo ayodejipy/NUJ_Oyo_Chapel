@@ -25,5 +25,9 @@ namespace NUJ_Oyo_State.Models.Data
         public string Designation { get; set; }
         public string ImageString { get; set; }
         public DateTime Date { get; set; }
+        public bool? UserApproved { get; set; }
+        public string DefaultPassword { get; set; }
+        public bool Active { get; set; }
+        public string Comment { get; set; }
     }
 }

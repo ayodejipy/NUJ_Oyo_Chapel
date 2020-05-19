@@ -1,13 +1,18 @@
-﻿@using Microsoft.Ajax;
-@model IEnumerable<NUJ_Oyo_State.Models.MembershipRequestVM>
+﻿@model IEnumerable<NUJ_Oyo_State.Models.MembershipRequestVM>
 
 @{
-    ViewBag.Title = "Requests";
-
-    AjaxOptions options = new AjaxOptions();
-    options.HttpMethod = "POST";
-    
+    ViewBag.Title = "NUJ - Membership Requests";
 }
+
+<style>
+    .hideLoader {
+        display: none;
+    }
+
+    .showLoader {
+        display: inherit !important;
+    }
+</style>
 
 <section class="padding_top">
     @if (Model.Count() == 0)
@@ -60,15 +65,38 @@
     }
     else
     {
+        if (TempData["SM"] != null)
+        {
+            if (TempData["SM"].ToString().Contains("successfully"))
+            {
+                <div class="alert alert-success">
+                    @TempData["SM"]
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-danger">
+                    @TempData["SM"]
+                </div>
+            }
+        }
+
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
         <h2 class="font-weight-bold">Requests</h2>
+
+        <div class="text-right">
+            <img class="loader hideLoader" src="~/img/loader.gif" style="height:auto; width:36px; margin-right:36px;" />
+        </div>
 
         <table id="cart" class="table table-hover table-condensed cart">
             <thead class="thead-dark">
                 <tr>
-                    <th style="width: 40%">Name</th>
+                    <th style="width: 35%">Name</th>
                     <th style="width: 10%">Member Id</th>
                     <th style="width: 14%">Branch</th>
                     <th style="width: 14%">Designation</th>
+                    <th style="width: 5%">Status</th>
                     <th style="width: 22%"></th>
                 </tr>
             </thead>
@@ -88,166 +116,119 @@
                         <td data-th="Designation">
                             <p>@item.Designation</p>
                         </td>
+                        <td dath-th="Status">
+                            @if (item.UserApproved == true)
+                            {
+                                <p class="text-primary">Approved</p>
+                            }
+                            else if (item.UserApproved == false)
+                            {
+                                <p class="text-danger">Declined</p>
+                            }
+                            else
+                            {
+                                <p class="text-info">Pending</p>
+                            }
+                        </td>
                         <td class="actions" data-th="">
-                            <a href="~/account/requests/@item.Id">Details</a> |
+                            @if (item.UserApproved == true)
+                            {
+                                <div>
+                                    <a href="~/account/requests/@item.Id" class="text-primary">View Details</a> |
 
-                            @Ajax.ActionLink("Approve", "Approve", new { id = @item.Id }, options)
-                            |
+                                    <a href="" class="text-danger" onclick="ResendConfirmEmail(@item.Id)">Re-send Notification</a>
+                                </div>
+                            }
+                            else if (item.UserApproved == false)
+                            {
+                                <div>
+                                    <a href="~/account/requests/@item.Id" class="text-primary">View Details</a> |
 
-                            <a href="~/account/decline/@item.Id">Decline</a>
+                                    <a href="" class="text-danger" onclick="ResendDeclineEmail(@item.Id)">Re-send Notification</a>
+                                </div>
+                            }
+                            else
+                            {
+                                <div>
+                                    <a href="~/account/requests/@item.Id">Details</a> |
+
+                                    @Html.ActionLink("Approve", "Approve", new { id = @item.Id }) |
+
+                                    <a href="" onclick="declineMember(@item.Id)">Decline</a>
+                                </div>
+                            }
                         </td>
                     </tr>
                 </tbody>
             }
 
-            <tfoot>
+            @*<tfoot>
                 <tr>
-                    <td colspan="4" class="hidden-xs"></td>
-                    @if (Request.IsAuthenticated)
-                    {
-                        <td>
-                            <a href="/checkout/checkout">Approve All</a> |
-                            <a href="/checkout/checkout">Decline All</a>
-                        </td>
-                    }
-                    else
-                    {
-                        <td>
-                            @Html.ActionLink("Checkout", "Login", "Account", new { returnUrl = Request.Url.AbsolutePath }, new { @class = "btn btn-pry btn-block angle-right" })
-                        </td>
-                    }
-
+                    <td colspan="5" class="hidden-xs"></td>
+                    <td>
+                        <a href="#" class="text-primary">Approve All Pending</a>
+                    </td>
                 </tr>
-            </tfoot>
+            </tfoot>*@
         </table>
     }
-    @*<div>
-            <hr />
-            <dl class="dl-horizontal">
-                <dt>
-                    @Html.DisplayNameFor(model => model.FirstName)
-                </dt>
 
-                <dd>
-                    @Html.DisplayFor(model => model.FirstName)
-                </dd>
-
-                <dt>
-                    @Html.DisplayNameFor(model => model.OtherNames)
-                </dt>
-
-                <dd>
-                    @Html.DisplayFor(model => model.OtherNames)
-                </dd>
-
-                <dt>
-                    @Html.DisplayNameFor(model => model.Gender)
-                </dt>
-
-                <dd>
-                    @Html.DisplayFor(model => model.Gender)
-                </dd>
-
-                <dt>
-                    @Html.DisplayNameFor(model => model.DOB)
-                </dt>
-
-                <dd>
-                    @Html.DisplayFor(model => model.DOB)
-                </dd>
-
-                <dt>
-                    @Html.DisplayNameFor(model => model.Phone)
-                </dt>
-
-                <dd>
-                    @Html.DisplayFor(model => model.Phone)
-                </dd>
-
-                <dt>
-                    @Html.DisplayNameFor(model => model.StateOfOrigin)
-                </dt>
-
-                <dd>
-                    @Html.DisplayFor(model => model.StateOfOrigin)
-                </dd>
-
-                <dt>
-                    @Html.DisplayNameFor(model => model.Email)
-                </dt>
-
-                <dd>
-                    @Html.DisplayFor(model => model.Email)
-                </dd>
-
-                <dt>
-                    @Html.DisplayNameFor(model => model.Address)
-                </dt>
-
-                <dd>
-                    @Html.DisplayFor(model => model.Address)
-                </dd>
-
-                <dt>
-                    @Html.DisplayNameFor(model => model.City)
-                </dt>
-
-                <dd>
-                    @Html.DisplayFor(model => model.City)
-                </dd>
-
-                <dt>
-                    @Html.DisplayNameFor(model => model.State)
-                </dt>
-
-                <dd>
-                    @Html.DisplayFor(model => model.State)
-                </dd>
-
-                <dt>
-                    @Html.DisplayNameFor(model => model.Zip)
-                </dt>
-
-                <dd>
-                    @Html.DisplayFor(model => model.Zip)
-                </dd>
-
-                <dt>
-                    @Html.DisplayNameFor(model => model.MembershipId)
-                </dt>
-
-                <dd>
-                    @Html.DisplayFor(model => model.MembershipId)
-                </dd>
-
-                <dt>
-                    @Html.DisplayNameFor(model => model.Branch)
-                </dt>
-
-                <dd>
-                    @Html.DisplayFor(model => model.Branch)
-                </dd>
-
-                <dt>
-                    @Html.DisplayNameFor(model => model.Designation)
-                </dt>
-
-                <dd>
-                    @Html.DisplayFor(model => model.Designation)
-                </dd>
-
-                <dt>
-                    @Html.DisplayNameFor(model => model.ImageString)
-                </dt>
-
-                <dd>
-                    <img src="@Model.ImageString" alt="@Model.FirstName @Model.OtherNames" />
-                </dd>
-
-            </dl>
-        </div>
-        <p>
-            @Html.ActionLink("Approve", "Approve", new { id = Model.Id }) |
-            @Html.ActionLink("Decline", "Index")
-        </p>*@
 </section>
+
+
+<script>
+    $(document).ajaxStart(function () {
+        $(".loader").show();
+        $('.loader').addClass('showLoader')
+    });
+
+    $(document).ajaxStop(function () {
+        $(".loader").hide();
+    });
+
+    function declineMember(memberId) {
+        var txt = prompt("Please provide a comment", "This member is not recognized.");
+        if (txt == null || txt == "") {
+            return false;
+        } else {
+            var data = { "id": memberId, "reason": txt }
+            $.ajax({
+                type: "GET",
+                url: "/account/decline/",
+                cache: false,
+                dataType: "text",
+                data: data
+            }).always(function (msg) {
+                $('.loader').addClass('showLoader')
+                alert(msg);
+                window.location.reload()
+            });
+        }
+    }
+
+    function ResendConfirmEmail(memberId) {
+        $.ajax({
+            type: "GET",
+            url: "/account/confirm-again/",
+            cache: false,
+            dataType: "text",
+            data: { id: memberId }
+        }).done(function (msg) {
+            alert(msg);
+        });
+    }
+
+    function ResendDeclineEmail(memberId) {
+        $.ajax({
+            type: "GET",
+            url: "/account/decline-again/",
+            cache: false,
+            dataType: "text",
+            data: { id: memberId }
+        }).done(function (msg) {
+            alert(msg);
+        }).fail(function () {
+            alert("Sorry. Server unavailable.");
+        });
+    }
+</script>

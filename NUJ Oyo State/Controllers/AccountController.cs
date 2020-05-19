@@ -62,6 +62,12 @@ namespace NUJ_Oyo_State.Controllers
         [AllowAnonymous]
         public ActionResult Login(string returnUrl)
         {
+            // Confirm user is not logged in
+            string username = User.Identity.Name;
+
+            if (!string.IsNullOrEmpty(username))
+                return Redirect("~/manage/index");
+
             ViewBag.ReturnUrl = returnUrl;
             return View();
         }
@@ -197,7 +203,8 @@ namespace NUJ_Oyo_State.Controllers
                 Branch = model.Branch,
                 Designation = model.Designation,
                 ImageString = model.ImageString,
-                Date = DateTime.UtcNow
+                Date = DateTime.UtcNow,
+                Active = true
             };
 
             // save the request to database
@@ -209,7 +216,6 @@ namespace NUJ_Oyo_State.Controllers
 
             // send mail notification to admin
             // Init and send email
-            Email mail = new Email();
             EmailMessageVM mailModel = new EmailMessageVM();
 
             // init redirect link from email
@@ -228,37 +234,9 @@ namespace NUJ_Oyo_State.Controllers
             mailModel.Message = message;
 
             // send mail
-            bool sendMail = Email.SendMail(mailModel);
-
+            Email.SendMail(mailModel);
 
             return View();
-
-
-
-
-
-
-            //if (ModelState.IsValid)
-            //{
-            //    var user = new User { UserName = model.Email, Email = model.Email };
-            //    var result = await UserManager.CreateAsync(user, model.Password);
-            //    if (result.Succeeded)
-            //    {
-            //        await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
-
-            //        // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
-            //        // Send an email with this link
-            //        // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
-            //        // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-            //        // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
-
-            //        return RedirectToAction("Index", "Home");
-            //    }
-            //    AddErrors(result);
-            //}
-
-            //// If we got this far, something failed, redisplay form
-            //return View(model);
         }
 
         //
@@ -579,18 +557,17 @@ namespace NUJ_Oyo_State.Controllers
                     UserName = member.Email,
                     Email = member.Email,
                     FirstName = member.FirstName,
-                    OtherNames=member.OtherNames,
+                    OtherNames = member.OtherNames,
                     Gender = member.Gender,
-                    DOB=member.DOB,
-                    StateOfOrigin=member.StateOfOrigin,
-                    Address=member.Address,
-                    City=member.City,
-                    State=member.State,
-                    Zip=member.Zip,
-                    MembershipId=member.MembershipId,
-                    Branch=member.Branch,
-                    Designation=member.Designation,
-                    ImageString=member.ImageString
+                    DOB = member.DOB,
+                    StateOfOrigin = member.StateOfOrigin,
+                    Address = member.Address,
+                    City = member.City,
+                    State = member.State,
+                    Zip = member.Zip,
+                    MembershipId = member.MembershipId,
+                    Branch = member.Branch,
+                    Designation = member.Designation,
                 };
 
                 Random random = new Random();
@@ -625,7 +602,7 @@ namespace NUJ_Oyo_State.Controllers
                 AddErrors(result);
             }
 
-            if(model.Count > 1)
+            if (model.Count > 1)
             {
                 TempData["SM"] = "All members has been approved successfully.";
             }
@@ -638,6 +615,15 @@ namespace NUJ_Oyo_State.Controllers
         #endregion
 
 
+        //GET:/Account/UserNavPartial
+        public string UserNavPartial()
+        {
+            // Get username
+            int userId = User.Identity.GetUserId<int>();
+
+            return db.Users.Where(x => x.Id == userId).Select(x => x.FirstName).FirstOrDefault();
+        }
+
         // GET:/Account/Requests
         [Authorize(Roles = "Admin")]
         public ActionResult Requests(int? id)
@@ -648,53 +634,41 @@ namespace NUJ_Oyo_State.Controllers
             // return all requests if id == null
             if (id == null)
             {
-                memberRequests = db.MembershipRequest.ToArray().Select(x => new MembershipRequestVM(x)).ToList();
+                memberRequests =
+                    db.MembershipRequest.ToArray()
+                    .Where(x => x.Active == true)
+                    .Select(x => new MembershipRequestVM(x)).ToList();
             }
             else
             {
-                memberRequests = db.MembershipRequest.ToArray().Where(x => x.Id == id).Select(x => new MembershipRequestVM(x)).ToList();
+                memberRequests =
+                    db.MembershipRequest.ToArray()
+                    .Where(x => x.Id == id && x.Active == true)
+                    .Select(x => new MembershipRequestVM(x)).ToList();
             }
-
-            //if (id == 0)
-            //    return HttpNotFound();
-
-            //// init requestDTO
-            //MembershipRequestDTO requestDTO = db.MembershipRequest.Where(x => x.Id == id).FirstOrDefault();
-
-            //// init requestVM
-            //MembershipRequestVM requestVM = new MembershipRequestVM
-            //{
-            //    Id = requestDTO.Id,
-            //    FirstName = requestDTO.FirstName,
-            //    OtherNames = requestDTO.OtherNames,
-            //    Gender = requestDTO.Gender,
-            //    DOB = requestDTO.DOB,
-            //    StateOfOrigin = requestDTO.StateOfOrigin,
-            //    Phone = requestDTO.Phone,
-            //    Email = requestDTO.Email,
-            //    Address = requestDTO.Address,
-            //    City = requestDTO.City,
-            //    State = requestDTO.State,
-            //    Zip = requestDTO.Zip,
-            //    MembershipId = requestDTO.MembershipId,
-            //    Branch = requestDTO.Branch,
-            //    Designation = requestDTO.Designation,
-            //    ImageString = requestDTO.ImageString
-            //};
 
             // return view with memberRequests
             return View(memberRequests);
         }
 
-       
-        // POST:/Account/Approve
+
+        //POST:/Account/Approve
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> Approve(int id)
         {
             if (ModelState.IsValid)
             {
                 // init requestDTO
-                MembershipRequestDTO requestDTO = db.MembershipRequest.Where(x => x.Id == id).FirstOrDefault();
+                MembershipRequestDTO requestDTO =
+                    db.MembershipRequest.Where(x => x.Id == id).FirstOrDefault();
+
+                User existingUser = db.Users.Where(x => x.MembershipId == requestDTO.MembershipId).FirstOrDefault();
+                if (existingUser != null)
+                {
+                    TempData["SM"] = "Error: Member with the ID: " + requestDTO.MembershipId + " already exist";
+                    return RedirectToAction("Requests");
+                }
+
 
                 var user = new User
                 {
@@ -712,7 +686,6 @@ namespace NUJ_Oyo_State.Controllers
                     MembershipId = requestDTO.MembershipId,
                     Branch = requestDTO.Branch,
                     Designation = requestDTO.Designation,
-                    ImageString = requestDTO.ImageString
                 };
 
                 // generate a random password
@@ -743,23 +716,41 @@ namespace NUJ_Oyo_State.Controllers
                 var result = await UserManager.CreateAsync(user, defaultPassword);
                 if (result.Succeeded)
                 {
+                    // save user image
+                    ImagesDTO userImage = new ImagesDTO
+                    {
+                        Image1 = requestDTO.ImageString,
+                        UserId = user.Id
+                    };
+                    db.Images.Add(userImage);
 
-                    // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
                     // Send an email with this link
-                    // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
-                    // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-                    // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
+                    string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
+                    var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
+                    var message = "Hello,";
+                    message += "<br>Your request to join NUJ - Oyo Chapel has just been approved. This is your password <strong>" + defaultPassword + "</strong>";
+                    message += "<br>Kindly click the button below to confirm your email address and log in with the password above.";
+                    message += "<br><br> <html><body><a href='/" + callbackUrl + "' style=\"padding: 8px 12px; border: 1px solid #17454E;border-radius: 2px;font-family: Helvetica, Arial, sans-serif;font-size: 14px; color: #ffffff;background-color:#17454E;text-decoration: none;font-weight:bold;display: inline-block;\">See Full Details Here</a></body></html>";
+
+                    await UserManager.SendEmailAsync(user.Id, "NUJ - Registration Request Approved.", message);
+
+                    // update the user in membership request
+                    requestDTO.DefaultPassword = defaultPassword;
+                    requestDTO.UserApproved = true;
+                    db.SaveChanges();
 
                     TempData["SM"] = "Member has been approved successfully.";
                 }
                 else
                 {
-                    AddErrors(result);
+                    string errMsg = "";
                     foreach (var error in result.Errors)
                     {
-                        ModelState.AddModelError("", error);
+                        if (!error.ToString().Contains("Name"))
+                            errMsg += error.ToString() + ", ";
                     }
-                    TempData["SM"] = "There was an error approving the member";
+
+                    TempData["SM"] = "Error: " + errMsg;
                 }
             }
 
@@ -767,96 +758,153 @@ namespace NUJ_Oyo_State.Controllers
             return RedirectToAction("Requests");
         }
 
-        // GET:/Account/MembershipRequest
-        //[ActionName("membership-request")]
-        //[AllowAnonymous]
-        //public ActionResult MembershipRequest()
-        //{
-        //    return View("MembershipRequest");
-        //}
+        //POST:/Account/Decline
+        [Authorize(Roles = "Admin, BranchAdmin")]
+        public string Decline(int id, string reason)
+        {
+            // init memberDTO
+            MembershipRequestDTO memberDTO =
+                    db.MembershipRequest.Where(x => x.Id == id).FirstOrDefault();
 
-        //// POST:/Account/MembershiRequest
-        //[ActionName("membership-request")]
-        //[HttpPost]
-        //[AllowAnonymous]
-        //public ActionResult MembershipRequest(MembershipRequestVM model)
-        //{
-        //    // check model state
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return View("MembershipRequest", model);
-        //    }
+            // deactivate the member
+            memberDTO.UserApproved = false;
+            memberDTO.Comment = reason;
+            db.SaveChanges();
 
-        //    // set gender
-        //    string gender;
-        //    if (model.Gender == "1")
-        //    {
-        //        gender = "Male";
-        //    }
-        //    else
-        //    {
-        //        gender = "Female";
-        //    }
+            // Send an email with this link
+            EmailMessageVM mailModel = new EmailMessageVM();
 
-        //    // init membershipRequest
-        //    MembershipRequestDTO membershipRequest = new MembershipRequestDTO()
-        //    {
-        //        FirstName = model.FirstName,
-        //        OtherNames = model.OtherNames,
-        //        Gender = gender,
-        //        DOB = model.DOB.ToUniversalTime(),
-        //        StateOfOrigin = model.StateOfOrigin,
-        //        Phone = model.Phone,
-        //        Email = model.Email,
-        //        Address = model.Address,
-        //        City = model.City,
-        //        State = model.State,
-        //        Zip = model.Zip,
-        //        MembershipId = model.MembershipId,
-        //        Branch = model.Branch,
-        //        Designation = model.Designation,
-        //        ImageString = model.ImageString
-        //    };
+            mailModel.ToAddress = memberDTO.Email;
+            mailModel.Subject = "Membership Registration Declined";
 
-        //    // save the request to database
-        //    db.MembershipRequest.Add(membershipRequest);
-        //    db.SaveChanges();
+            var message = "Hello " + memberDTO.FirstName.ToUpper() + ",<br/>";
+            message += "Your request to join NUJ - Oyo Chapel has been declined.<br/>";
+            message += "Note: " + reason + "<br/>";
+            message += "Please contact NUJ Oyo Chapter for further enquiries or assistance.<br/>";
+            message += "<address> <br/>";
+            message += "One Microsoft Way <br/>";
+            message += "Redmond, WA 98052 - 6399 <br/>";
+            message += "<abbr title = \"Phone\"> P:";
+            message += " 425.555.0100 <br/>";
+            message += "Email: info@nujoyo.com <br/>";
+            message += "</address> ";
 
-        //    // Set TempData message
-        //    TempData["SM"] = "Your membership request has been sent successfully. A confirmation email will be sent to you.";
+            mailModel.Message = message;
 
-        //    // send mail notification to admin
-        //    // Init and send email
-        //    Email mail = new Email();
-        //    EmailMessageVM mailModel = new EmailMessageVM();
-
-        //    // init redirect link from email
-        //    var request = Request.Url.Authority.ToString().ToLower();
-        //    var link = request + "/Home/About";
-
-        //    mailModel.ToAddress = "davidire71@gmail.com";
-        //    mailModel.Subject = "New Membership Registration Request";
-        //    string message = "A New member has requested to register to the NUJ Oyo State Portal. Below are the details.";
-        //    message += "<br><br>Name: " + model.FirstName.ToUpper() + " " + model.OtherNames;
-        //    message += "<br>Member Id: " + model.MembershipId;
-        //    message += "<br>Branch: " + model.Branch;
-        //    message += "<br>Designation: " + model.Designation;
-        //    message += "<br><br> <html><body><a href='https://" + link + "' style=\"padding: 8px 12px; border: 1px solid #17454E;border-radius: 2px;font-family: Helvetica, Arial, sans-serif;font-size: 14px; color: #ffffff;background-color:#17454E;text-decoration: none;font-weight:bold;display: inline-block;\">See Full Details Here</a></body></html>"; ;
-
-        //    mailModel.Message = message;
-
-        //    // send mail
-        //    bool sendMail = Email.SendMail(mailModel);
+            bool sent = Email.SendMail(mailModel);
+            if (sent)
+            {
+                return "Member request declined successfully.";
+            }
+            else
+            {
+                return "Member request declined successfully. Unable to send email notification, try re-sending.";
+            }
+        }
 
 
-        //    return View("MembershipRequest", new MembershipRequestVM());
-        //}
+        //GET:/Account/confirm-again
+        [Authorize(Roles = "Admin, BranchAdmin")]
+        [ActionName("confirm-again")]
+        public async Task<string> ConfirmAgainAsync(int id)
+        {
+            // init requestDTO
+            MembershipRequestDTO requestDTO =
+                db.MembershipRequest.Where(x => x.Id == id).FirstOrDefault();
+
+            int userId = db.Users.Where(x => x.MembershipId == requestDTO.MembershipId).Select(x => x.Id).FirstOrDefault();
+            if (userId == null)
+                return "This user is not registered yet.";
+
+            // Send an email with this link
+            EmailMessageVM mailModel = new EmailMessageVM();
+
+            mailModel.ToAddress = requestDTO.Email;
+            mailModel.Subject = "NUJ - Registration Request Approved.";
+
+            string code = await UserManager.GenerateEmailConfirmationTokenAsync(userId);
+            var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = userId, code = code }, protocol: Request.Url.Scheme);
+            var message = "Hello,";
+            message += "<br>Your request to join NUJ - Oyo Chapel has just been approved. This is your password <strong>" + requestDTO.DefaultPassword + "</strong>";
+            message += "<br>Kindly click the button below to confirm your email address and log in with the password above.";
+            message += "<br><br> <html><body><a href='/" + callbackUrl + "' style=\"padding: 8px 12px; border: 1px solid #17454E;border-radius: 2px;font-family: Helvetica, Arial, sans-serif;font-size: 14px; color: #ffffff;background-color:#17454E;text-decoration: none;font-weight:bold;display: inline-block;\">See Full Details Here</a></body></html>";
+            mailModel.Message = message;
+
+            bool sent = Email.SendMail(mailModel);
+            if (sent)
+            {
+                return "Email re-sent successfully.";
+            }
+            else
+            {
+                return "Unable to re-send email, please try again later.";
+            }
+        }
+
+
+        //GET:/Account/confirm-again
+        [Authorize(Roles = "Admin, BranchAdmin")]
+        [ActionName("decline-again")]
+        public string DeclineAgain(int id)
+        {
+            // init requestDTO
+            MembershipRequestDTO memberDTO =
+                db.MembershipRequest.Where(x => x.Id == id).FirstOrDefault();
+
+            // Send an email with this link
+            EmailMessageVM mailModel = new EmailMessageVM();
+
+            mailModel.ToAddress = memberDTO.Email;
+            mailModel.Subject = "Membership Registration Declined";
+
+            var message = "Hello " + memberDTO.FirstName.ToUpper() + ",<br/>";
+            message += "Your request to join NUJ - Oyo Chapel has been declined.<br/>";
+            message += "Note: " + memberDTO.Comment + "<br/>";
+            message += "Please contact NUJ Oyo Chapter for further enquiries or assistance.<br/>";
+            message += "<address> <br/>";
+            message += "One Microsoft Way <br/>";
+            message += "Redmond, WA 98052 - 6399 <br/>";
+            message += "<abbr title = \"Phone\"> P:";
+            message += " 425.555.0100 <br/>";
+            message += "Email: info@nujoyo.com <br/>";
+            message += "</address> ";
+
+            mailModel.Message = message;
+
+            bool sent = Email.SendMail(mailModel);
+            if (sent)
+            {
+                return "Email re-sent successfully.";
+            }
+            else
+            {
+                return "Unable to re-send email, please try again later.";
+            }
+        }
+
+                          
+
+
+
+
+
+
 
         [AllowAnonymous]
         public ActionResult Test()
         {
-            MembershipRequestDTO dto = db.MembershipRequest.Where(x => x.Gender == "Female").FirstOrDefault();
-            TempData["Image"] = dto.ImageString;
+            // save user image
+            ImagesDTO userImage = new ImagesDTO
+            {
+
+                Image1 = "this.imageijdnfldsfs",
+                UserId = 1
+            };
+
+            db.Images.Add(userImage);
+            db.SaveChanges();
+
+
             return View();
         }
     }
